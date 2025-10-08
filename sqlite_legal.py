@@ -8,14 +8,12 @@ def connect_db():
 
 def create_table(conn):
     with conn:
-        conn.execute("CREATE TABLE alunos(id, nome, idade, email)")
+        conn.execute("CREATE TABLE IF NOT EXISTS alunos(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, nome VARCHAR(255), idade INTEGER, email VARCHAR(255))")
 
 def insert_aluno(conn, nome, idade, email):
     with conn:
         conn.execute(
-        "INSERT INTO alunos VALUES (?, ?, ?)",
-        (nome, idade, email),
-        )
+        "INSERT INTO alunos (nome, idade, email) VALUES (?, ?, ?)", (nome, idade, email))
 
 def list_alunos(conn):
     with closing(conn.cursor()) as cur:
@@ -30,7 +28,7 @@ def list_alunos(conn):
 
 def get_aluno_by_id(conn, aluno_id):
     with closing(conn.cursor()) as cur:
-        cur.execute("SELECT * FROM alunos where id = ?", (aluno_id,))
+        cur.execute("SELECT * FROM alunos WHERE id = ?", (aluno_id,))
         row = cur.fetchone()
         print(f"■ BUSCAR POR ID (id={aluno_id}) ->", row)
         print("-"*50)
@@ -41,18 +39,19 @@ def update_aluno(conn, aluno_id, nome=None, idade=None, email=None):
     valores = []
     if nome is not None:
         campos.append("nome = ?")
-    valores.append(nome)
+        valores.append(nome)
     if idade is not None:
         campos.append("idade = ?")
-    valores.append(idade)
+        valores.append(idade)
     if email is not None:
         campos.append("email = ?")
-    valores.append(email)
+        valores.append(email)
     if not campos:
         print("Nenhum campo para atualizar.")
         return
     valores.append(aluno_id)
-    sql = f"UPATE alunos set ... WHERE id = ?"
+    sql = f"UPDATE alunos SET {" ".join(campos)} WHERE id = ?"
+    print(sql)
     with conn:
         conn.execute(sql, tuple(valores))
     print(f"✏■ ATUALIZAR (id={aluno_id})")
